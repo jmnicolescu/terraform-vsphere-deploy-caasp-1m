@@ -5,6 +5,7 @@
 ```
 Features of this build:
 
+   One Master
    Deployment on VMware vSphere 7.0
    Build standard SLES-15.1 templates using Packer and  standard AutoYaST installation method.
    Enable vSphere Cloud Provider Integration 
