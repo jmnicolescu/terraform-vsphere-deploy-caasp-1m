@@ -1,6 +1,6 @@
-### Deployment and Configuration of SUSE CaaS Platform 4.2.5 on VMware vSphere 7.0
+### Automated deployment of SUSE CaaS Platform 4.2.5 on VMware vSphere 7.0
 
-####  Build Scenario 1 - one Admin Node, one Master Nodes, two Worker Nodes
+####  Deployment Scenario 1 - one Admin Node, one Master Nodes, two Worker Nodes
 
 ```
 Futures of this build:
