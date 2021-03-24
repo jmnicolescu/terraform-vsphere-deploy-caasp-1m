@@ -3,7 +3,7 @@
 ####  Deployment Scenario 1 - one Admin Node, one Master Nodes, two Worker Nodes
 
 ```
-Futures of this build:
+Features of this build:
 
    Deployment on VMware vSphere 7.0
    Build standard SLES-15.1 templates using Packer and  standard AutoYaST installation method.
