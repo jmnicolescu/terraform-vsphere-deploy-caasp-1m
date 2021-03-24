@@ -1,0 +1,96 @@
+# Tag for images - do not edit
+consoleVersion: 2.7.0-35f5964bd-cap
+dockerRegistrySecret: regsecret
+# Specify default DB password
+dbPassword: tuxtux
+dbProvider: mysql
+# Specify which storage class should be used for PVCs
+storageClass: vsphere-dynamic
+# Provide Proxy settings if required
+#httpProxy: proxy.corp.net
+#httpsProxy: proxy.corp.net
+#noProxy: localhost
+#ftpProxy: proxy.corp.net
+#socksProxy: sock-proxy.corp.net
+imagePullPolicy: IfNotPresent
+# useLb is deprecated - use console.service.type
+useLb: false
+console:
+  cookieDomain:
+  # externalIP deprecated - use console.service.externalIPs
+  backendLogLevel: info
+  ssoLogin: false
+  ssoOptions:
+  # Session Store Secret
+  sessionStoreSecret:
+  # Stratos Services
+  service:
+    externalIPs: []
+    loadBalancerIP:
+    loadBalancerSourceRanges: []
+    servicePort: 443
+    type: ClusterIP
+    externalName:
+    ingress:
+      ## If true, Ingress will be created
+      enabled: true
+
+      ## Additional annotations
+      annotations:
+        kubernetes.io/ingress.class: nginx
+      ## Additional labels
+      extraLabels: {}
+
+      ## Host for the ingress
+      host: c2-stratos.flexlab.local
+      # Name of secret containing TLS certificate
+      secretName: stratos-tls
+      # crt and key for TLS Certificate (this chart will create the secret based on these)
+      tls:
+        crt:
+        key:
+
+    http:
+      enabled: false
+      servicePort: 80
+      # nodePort: 30001
+
+  # Name of config map that provides the template files for user invitation emails
+  templatesConfigMapName:
+
+  # Email subject of the user invitation message 
+  userInviteSubject: ~
+
+  # Whether to perform the volume migration job on install/upgrade (migrate to secrets)
+  migrateVolumes: false
+  
+  # Enable/disable Tech Preview
+  techPreview: true
+
+  # Use local admin user instead of UAA - set to a password to enable
+  localAdminPassword: tux
+
+images:
+  console: stratos-console
+  proxy: stratos-jetstream
+  postflight: stratos-postflight-job
+  mariadb: stratos-mariadb
+
+mariadb:
+  # Only required for creating the databases
+  mariadbRootPassword: tuxtux
+  adminUser: root
+  # Credentials for user
+  mariadbUser: console
+  mariadbPassword: tuxtux
+  mariadbDatabase: console
+  usePassword: true
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: vsphere-dynamic

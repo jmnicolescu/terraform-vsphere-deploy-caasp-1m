@@ -1,0 +1,11 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: vsphere-dynamic
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+  #storagePolicyName: "vSAN Default Storage Policy"
+  storagePolicyName: "EAST-STORAGE-PROFILE"
+  datastore: vsanDatastore

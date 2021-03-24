@@ -1,0 +1,32 @@
+# Enable the creation of pod security policy
+podSecurityPolicy:
+  enabled: false
+
+# Create a specific service account
+serviceAccount:
+  create: true
+  name: nginx-ingress
+
+controller:
+  # Number of controller pods - should match the number of workers
+  replicaCount: 2
+
+#--------------------------------------------------------------------------------------
+# LoadBalancer Implementation
+# The services will be exposed on the loadbalancer that the cloud provider serves.
+#--------------------------------------------------------------------------------------
+service:
+  enableHttp: false
+  type: LoadBalancer
+
+#--------------------------------------------------------------------------------------
+# NodePort Implementation
+# The services will be publicly exposed on each node of the cluster, including master nodes, 
+# at ports 32080 for HTTP and 32443 for HTTPS.
+#--------------------------------------------------------------------------------------
+#service:
+#  enableHttp: true
+#  type: NodePort
+#  nodePorts:
+#    http: 32080
+#    https: 32443

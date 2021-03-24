@@ -1,0 +1,195 @@
+# -------------------------------------------------------------------------------
+# Alertmanager configuration - prometheus-alertmanager.flexlab.local
+# -------------------------------------------------------------------------------
+alertmanager:
+  enabled: true
+  ingress:
+    enabled: true
+    hosts:
+    -  c2-prometheus-alertmanager.flexlab.local
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    tls:
+      - hosts:
+        - c2-prometheus-alertmanager.flexlab.local
+        secretName: prometheus-alertmanager-tls
+    rules:
+      - host: c2-prometheus-alertmanager.flexlab.local
+        http:
+          paths:
+          - path: /
+            backend:
+              serviceName: prometheus-alermanager
+              servicePort: 80
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 2Gi
+    storageClass: vsphere-dynamic
+
+## Alertmanager is configured through alertmanager.yml. This file and any others
+## listed in alertmanagerFiles will be mounted into the alertmanager pod.
+## See configuration options https://prometheus.io/docs/alerting/configuration/
+#alertmanagerFiles:
+#  alertmanager.yml:
+
+# Create a specific service account
+serviceAccounts:
+  nodeExporter:
+    name: prometheus-node-exporter
+
+# Node tolerations for node-exporter scheduling to nodes with taints
+# Allow scheduling of node-exporter on master nodes
+nodeExporter:
+  hostNetwork: false
+  hostPID: false
+  podSecurityPolicy:
+    enabled: true
+    annotations:
+      apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
+      apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
+      seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
+      seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+
+# Disable Pushgateway
+pushgateway:
+  enabled: false
+
+# -------------------------------------------------------------------------------
+# Prometheus configuration - c2-prometheus.flexlab.local
+# -------------------------------------------------------------------------------
+server:
+  ingress:
+    enabled: true
+    hosts:
+    - c2-prometheus.flexlab.local
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    tls:
+      - hosts:
+        - c2-prometheus.flexlab.local
+        secretName: prometheus-tls
+    rules:
+      - host: c2-prometheus.flexlab.local
+        http:
+          paths:
+          - path: /
+            backend:
+              serviceName: prometheus-server
+              servicePort: 80
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 8Gi
+    storageClass: vsphere-dynamic
+
+## Prometheus is configured through prometheus.yml. This file and any others
+## listed in serverFiles will be mounted into the server pod.
+## See configuration options
+## https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+# -------------------------------------------------------------------------------
+#  Prometheus server - alerting rules
+# -------------------------------------------------------------------------------
+serverFiles:
+  alerts: {}
+  rules:
+    groups:
+    
+    - name: caasp.node.rules
+      rules:
+      - alert: NodeIsNotReady
+        expr: kube_node_status_condition{condition="Ready",status="false"} == 1 or kube_node_status_condition{condition="Ready",status="unknown"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: '{{ $labels.node }} is not ready'
+
+      - alert: NodeIsOutOfDisk
+        expr: kube_node_status_condition{condition="OutOfDisk",status="true"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: '{{ $labels.node }} has insufficient free disk space'
+
+      - alert: NodeHasDiskPressure
+        expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+        labels:
+          severity: warning
+        annotations:
+          description: '{{ $labels.node }} has insufficient available disk space'
+
+      - alert: NodeHasInsufficientMemory
+        expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+        labels:
+          severity: warning
+        annotations:
+          description: '{{ $labels.node }} has insufficient available memory'
+
+    - name: caasp.certs.rules
+      rules:
+      - alert: KubernetesCertificateExpiry3Months
+        expr: (cert_exporter_cert_expires_in_seconds / 86400) < 90
+        labels:
+          severity: info
+        annotations:
+          description: 'The cert for {{ $labels.filename }} on {{ $labels.nodename }} node is going to expire in 3 months'
+      - alert: KubernetesCertificateExpiry30Days
+        expr: (cert_exporter_cert_expires_in_seconds / 86400) < 30
+        labels:
+          severity: warning
+        annotations:
+          description: 'The cert for {{ $labels.filename }} on {{ $labels.nodename }} node is going to expire in 30 days'
+      - alert: KubernetesCertificateExpiry7Days
+        expr: (cert_exporter_cert_expires_in_seconds / 86400) < 7
+        labels:
+          severity: critical
+        annotations:
+          description: 'The cert for {{ $labels.filename }} on {{ $labels.nodename }} node is going to expire in 7 days'
+      - alert: KubeconfigCertificateExpiry3Months
+        expr: (cert_exporter_kubeconfig_expires_in_seconds / 86400) < 90
+        labels:
+          severity: info
+        annotations:
+          description: 'The cert for {{ $labels.filename }} on {{ $labels.nodename }} node is going to expire in 3 months'
+      - alert: KubeconfigCertificateExpiry30Days
+        expr: (cert_exporter_kubeconfig_expires_in_seconds / 86400) < 30
+        labels:
+          severity: warning
+        annotations:
+          description: 'The cert for {{ $labels.filename }} on {{ $labels.nodename }} node is going to expire in 30 days'
+      - alert: KubeconfigCertificateExpiry7Days
+        expr: (cert_exporter_kubeconfig_expires_in_seconds / 86400) < 7
+        labels:
+          severity: critical
+        annotations:
+          description: 'The cert for {{ $labels.filename }} on {{ $labels.nodename }} node is going to expire in 7 days'
+      - alert: AddonCertificateExpiry3Months
+        expr: (cert_exporter_secret_expires_in_seconds / 86400) < 90
+        labels:
+          severity: info
+        annotations:
+          description: 'The cert for {{ $labels.secret_name }} is going to expire in 3 months'
+      - alert: AddonCertificateExpiry30Days
+        expr: (cert_exporter_secret_expires_in_seconds / 86400) < 30
+        labels:
+          severity: warning
+        annotations:
+          description: 'The cert for {{ $labels.secret_name }} is going to expire in 30 days'
+      - alert: AddonCertificateExpiry7Days
+        expr: (cert_exporter_secret_expires_in_seconds / 86400) < 7
+        labels:
+          severity: critical
+        annotations:
+          description: 'The cert for {{ $labels.secret_name }} is going to expire in 7 days'

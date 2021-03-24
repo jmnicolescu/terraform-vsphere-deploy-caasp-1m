@@ -1,0 +1,38 @@
+# Configure admin password
+adminPassword: tux
+
+# Ingress configuration
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - c2-grafana.flexlab.local
+  tls:
+    - hosts:
+      - c2-grafana.flexlab.local
+      secretName: grafana-tls
+  rules:
+      - host: c2-grafana.flexlab.local
+        http:
+          paths:
+          - path: /
+            backend:
+              serviceName: grafana
+              servicePort: 80
+
+# Configure persistent storage
+persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClass: vsphere-dynamic
+
+# Enable sidecar for provisioning
+sidecar:
+  datasources:
+    enabled: true
+    label: grafana_datasource
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
